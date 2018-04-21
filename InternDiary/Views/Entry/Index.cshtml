@@ -29,7 +29,7 @@
 @foreach (var item in Model) {
     <tr>
         <td>
-            @Html.DisplayFor(modelItem => item.Date)
+            @Html.ValueFor(modelItem => item.Date, "{0:dd/MM/yyyy}")
         </td>
         <td>
             @Html.DisplayFor(modelItem => item.Title)
