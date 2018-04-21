@@ -196,6 +196,10 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\Database\BaseModel.cs" />
+    <Compile Include="Models\Database\Entry.cs" />
+    <Compile Include="Models\Database\EntrySkill.cs" />
+    <Compile Include="Models\Database\Skill.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\ManageViewModels.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
