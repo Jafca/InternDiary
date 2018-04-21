@@ -13,6 +13,7 @@ namespace InternDiary.Models.Database
 
         public string Title { get; set; }
 
+        [Range(1,5)]
         public int Rating { get; set; }
 
         public string Content { get; set; }
