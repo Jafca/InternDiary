@@ -195,6 +195,15 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201804211204125_Init.cs" />
+    <Compile Include="Migrations\201804211204125_Init.Designer.cs">
+      <DependentUpon>201804211204125_Init.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201804211208465_RequireSkillText.cs" />
+    <Compile Include="Migrations\201804211208465_RequireSkillText.Designer.cs">
+      <DependentUpon>201804211208465_RequireSkillText.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\Database\BaseModel.cs" />
     <Compile Include="Models\Database\Entry.cs" />
@@ -278,6 +287,14 @@
   <ItemGroup>
     <None Include="packages.config" />
     <Content Include="Scripts\jquery-1.10.2.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201804211204125_Init.resx">
+      <DependentUpon>201804211204125_Init.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201804211208465_RequireSkillText.resx">
+      <DependentUpon>201804211208465_RequireSkillText.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

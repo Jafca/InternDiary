@@ -1,6 +1,7 @@
 ﻿using System.Data.Entity;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using InternDiary.Models.Database;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 
@@ -20,14 +21,35 @@ namespace InternDiary.Models
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        public virtual DbSet<Entry> Entries { get; set; }
+        public virtual DbSet<Skill> Skills { get; set; }
+        public virtual DbSet<EntrySkill> EntrySkills { get; set; }
+
         public ApplicationDbContext()
-            : base("DefaultConnection", throwIfV1Schema: false)
+            : base("InternDiaryDb", throwIfV1Schema: false)
         {
         }
 
         public static ApplicationDbContext Create()
         {
             return new ApplicationDbContext();
+        }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<EntrySkill>()
+                .HasRequired(e => e.Entry)
+                .WithMany()
+                .HasForeignKey(e => e.EntryId)
+                .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<EntrySkill>()
+                .HasRequired(e => e.Skill)
+                .WithMany()
+                .HasForeignKey(e => e.SkillId)
+                .WillCascadeOnDelete(false);
         }
     }
 }
