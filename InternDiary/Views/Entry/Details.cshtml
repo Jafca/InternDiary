@@ -30,7 +30,7 @@
             @Html.DisplayNameFor(model => model.Rating)
         </dt>
 
-        <dd>
+        <dd class="displayRating">
             @Html.DisplayFor(model => model.Rating)
         </dd>
 
@@ -48,3 +48,7 @@
     @Html.ActionLink("Edit", "Edit", new { id = Model.Id }) |
     @Html.ActionLink("Back to List", "Index")
 </p>
+
+@section Scripts {
+    @Scripts.Render("~/Scripts/StarRating.js")
+}

@@ -31,7 +31,7 @@
             @Html.DisplayNameFor(model => model.Rating)
         </dt>
 
-        <dd>
+        <dd class="displayRating">
             @Html.DisplayFor(model => model.Rating)
         </dd>
 
@@ -45,7 +45,8 @@
 
     </dl>
 
-    @using (Html.BeginForm()) {
+    @using (Html.BeginForm())
+    {
         @Html.AntiForgeryToken()
 
         <div class="form-actions no-color">
@@ -54,3 +55,7 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    @Scripts.Render("~/Scripts/StarRating.js")
+}
