@@ -1,27 +1,41 @@
-﻿using System;
+﻿using InternDiary.Models;
+using InternDiary.Models.Database;
+using InternDiary.ViewModels.EntryVM;
+using Microsoft.AspNet.Identity;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
 using System.Linq;
 using System.Net;
-using System.Web;
 using System.Web.Mvc;
-using InternDiary.Models;
-using InternDiary.Models.Database;
 
 namespace InternDiary.Controllers
 {
     public class EntryController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
+        private IEnumerable<SelectListItem> _savedSkills;
 
-        // GET: Entry
         public ActionResult Index()
         {
-            return View(db.Entries.ToList());
+            var entries = db.Entries.ToList();
+            var skillsLearntCount = new List<int>();
+
+            foreach (var entry in entries)
+            {
+                skillsLearntCount.Add(db.EntrySkills.Count(es => es.EntryId == entry.Id));
+            }
+
+            var vm = new EntryIndexViewModel
+            {
+                Entries = entries,
+                SkillsLearntCount = skillsLearntCount
+            };
+
+            return View(vm);
         }
 
-        // GET: Entry/Details/5
         public ActionResult Details(Guid? id)
         {
             if (id == null)
@@ -33,34 +47,62 @@ namespace InternDiary.Controllers
             {
                 return HttpNotFound();
             }
-            return View(entry);
+
+            var skillsLearnt = string.Join(", ", db.Skills
+                .Where(s => db.EntrySkills
+                        .Where(e => e.EntryId == id)
+                        .Select(e => e.SkillId)
+                        .Contains(s.Id)
+                ).Select(s => s.Text).ToArray());
+
+            var vm = new EntryDetailsViewModel
+            {
+                Entry = entry,
+                SkillsLearnt = skillsLearnt
+            };
+            return View(vm);
         }
 
-        // GET: Entry/Create
         public ActionResult Create()
         {
-            return View();
+            var userId = User.Identity.GetUserId();
+            _savedSkills = db.Skills
+                    .Where(s => s.AuthorId == userId)
+                    .Select(a => new SelectListItem
+                    {
+                        Text = a.Text,
+                        Value = a.Id.ToString()
+                    });
+
+            var vm = new EntryCreateViewModel
+            {
+                SavedSkills = _savedSkills
+            };
+
+            return View(vm);
         }
 
-        // POST: Entry/Create
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "Id,Date,Title,Rating,Content")] Entry entry)
+        public ActionResult Create(EntryCreateViewModel vm)
         {
             if (ModelState.IsValid)
             {
-                entry.Id = Guid.NewGuid();
-                db.Entries.Add(entry);
+                db.Entries.Add(vm.Entry);
+
+                foreach (var skillId in vm.SkillsLearntIds ?? Enumerable.Empty<Guid>())
+                {
+                    db.EntrySkills.Add(new EntrySkill { EntryId = vm.Entry.Id, SkillId = skillId });
+                }
+
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
 
-            return View(entry);
+            vm.SavedSkills = _savedSkills;
+            return View(vm);
         }
 
-        // GET: Entry/Edit/5
         public ActionResult Edit(Guid? id)
         {
             if (id == null)
@@ -72,26 +114,55 @@ namespace InternDiary.Controllers
             {
                 return HttpNotFound();
             }
-            return View(entry);
+
+            var userId = User.Identity.GetUserId();
+            _savedSkills = db.Skills
+                    .Where(s => s.AuthorId == userId)
+                    .Select(a => new SelectListItem
+                    {
+                        Text = a.Text,
+                        Value = a.Id.ToString()
+                    }).ToList();
+
+            var currentEntrySkills = db.EntrySkills.Where(es => es.EntryId == entry.Id);
+            foreach (var entrySkill in currentEntrySkills)
+            {
+                _savedSkills.FirstOrDefault(s => s.Value == entrySkill.SkillId.ToString()).Selected = true;
+            }
+
+            var vm = new EntryCreateViewModel
+            {
+                Entry = entry,
+                SavedSkills = _savedSkills
+            };
+
+            return View(vm);
         }
 
-        // POST: Entry/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "Id,Date,Title,Rating,Content")] Entry entry)
+        public ActionResult Edit(EntryCreateViewModel vm)
         {
             if (ModelState.IsValid)
             {
-                db.Entry(entry).State = EntityState.Modified;
+                db.Entry(vm.Entry).State = EntityState.Modified;
+
+                var currentEntrySkills = db.EntrySkills.Where(es => es.EntryId == vm.Entry.Id);
+                db.EntrySkills.RemoveRange(currentEntrySkills);
+
+                foreach (var skillId in vm.SkillsLearntIds ?? Enumerable.Empty<Guid>())
+                {
+                    db.EntrySkills.Add(new EntrySkill { EntryId = vm.Entry.Id, SkillId = skillId });
+                }
+
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
-            return View(entry);
+
+            vm.SavedSkills = _savedSkills;
+            return View(vm);
         }
 
-        // GET: Entry/Delete/5
         public ActionResult Delete(Guid? id)
         {
             if (id == null)
@@ -103,16 +174,32 @@ namespace InternDiary.Controllers
             {
                 return HttpNotFound();
             }
-            return View(entry);
+
+            var skillsLearnt = string.Join(", ", db.Skills.
+                Where(s => db.EntrySkills
+                        .Where(e => e.EntryId == id)
+                        .Select(e => e.SkillId)
+                        .Contains(s.Id)
+                ).Select(s => s.Text).ToArray());
+
+            var vm = new EntryDetailsViewModel
+            {
+                Entry = entry,
+                SkillsLearnt = skillsLearnt
+            };
+            return View(vm);
         }
 
-        // POST: Entry/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(Guid id)
         {
             Entry entry = db.Entries.Find(id);
             db.Entries.Remove(entry);
+
+            var currentEntrySkills = db.EntrySkills.Where(es => es.EntryId == id);
+            db.EntrySkills.RemoveRange(currentEntrySkills);
+
             db.SaveChanges();
             return RedirectToAction("Index");
         }

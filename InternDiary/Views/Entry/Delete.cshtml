@@ -1,4 +1,4 @@
-﻿@model InternDiary.Models.Database.Entry
+﻿@model InternDiary.ViewModels.EntryVM.EntryDetailsViewModel
 
 @{
     ViewBag.Title = "Delete";
@@ -12,35 +12,50 @@
     <hr />
     <dl class="dl-horizontal">
         <dt>
-            @Html.DisplayNameFor(model => model.Date)
+            @Html.DisplayNameFor(model => model.Entry.Date)
         </dt>
 
         <dd>
-            @Html.ValueFor(model => model.Date, "{0:dd/MM/yyyy}")
+            @Html.ValueFor(model => model.Entry.Date, "{0:dd/MM/yyyy}")
         </dd>
 
         <dt>
-            @Html.DisplayNameFor(model => model.Title)
+            @Html.DisplayNameFor(model => model.Entry.Title)
         </dt>
 
         <dd>
-            @Html.DisplayFor(model => model.Title)
+            @Html.DisplayFor(model => model.Entry.Title)
         </dd>
 
         <dt>
-            @Html.DisplayNameFor(model => model.Rating)
+            @Html.DisplayNameFor(model => model.Entry.Rating)
         </dt>
 
         <dd class="displayRating">
-            @Html.DisplayFor(model => model.Rating)
+            @Html.DisplayFor(model => model.Entry.Rating)
         </dd>
 
         <dt>
-            @Html.DisplayNameFor(model => model.Content)
+            @Html.DisplayNameFor(model => model.Entry.Content)
         </dt>
 
         <dd>
-            @Html.DisplayFor(model => model.Content)
+            @Html.DisplayFor(model => model.Entry.Content)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.SkillsLearnt)
+        </dt>
+
+        <dd>
+            @if (string.IsNullOrEmpty(Model.SkillsLearnt))
+            {
+                @Html.Raw("None")
+            }
+            else
+            {
+                @Html.DisplayFor(model => model.SkillsLearnt)
+            }
         </dd>
 
     </dl>

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<InternDiary.Models.Database.Entry>
+﻿@model InternDiary.ViewModels.EntryVM.EntryIndexViewModel
 
 @{
     ViewBag.Title = "Index";
@@ -12,39 +12,39 @@
 <table class="table">
     <tr>
         <th>
-            @Html.DisplayNameFor(model => model.Date)
+            @Html.DisplayNameFor(model => model.Entries.First().Date)
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.Title)
+            @Html.DisplayNameFor(model => model.Entries.First().Title)
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.Rating)
+            @Html.DisplayNameFor(model => model.Entries.First().Rating)
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.Content)
+            @Html.DisplayNameFor(model => model.SkillsLearntCount)
         </th>
         <th></th>
     </tr>
 
-    @foreach (var item in Model)
+    @for (int i = 0; i < Model.Entries.Count(); i++)
     {
         <tr>
             <td>
-                @Html.ValueFor(modelItem => item.Date, "{0:dd/MM/yyyy}")
+                @Html.ValueFor(modelItem => Model.Entries[i].Date, "{0:dd/MM/yyyy}")
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Title)
+                @Html.DisplayFor(modelItem => Model.Entries[i].Title)
             </td>
             <td class="displayRating">
-                @Html.DisplayFor(modelItem => item.Rating)
+                @Html.DisplayFor(modelItem => Model.Entries[i].Rating)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Content)
+                @Html.DisplayFor(modelItem => Model.SkillsLearntCount[i])
             </td>
             <td>
-                @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
-                @Html.ActionLink("Details", "Details", new { id = item.Id }) |
-                @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                @Html.ActionLink("Edit", "Edit", new { id = Model.Entries[i].Id }) |
+                @Html.ActionLink("Details", "Details", new { id = Model.Entries[i].Id }) |
+                @Html.ActionLink("Delete", "Delete", new { id = Model.Entries[i].Id })
             </td>
         </tr>
     }
