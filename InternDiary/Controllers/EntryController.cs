@@ -12,14 +12,22 @@ using System.Web.Mvc;
 
 namespace InternDiary.Controllers
 {
+    [Authorize]
     public class EntryController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
         private IEnumerable<SelectListItem> _savedSkills;
+        private string _userId;
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            _userId = User.Identity.GetUserId();
+            base.OnActionExecuting(filterContext);
+        }
 
         public ActionResult Index()
         {
-            var entries = db.Entries.ToList();
+            var entries = db.Entries.Where(e => e.AuthorId == _userId).ToList();
             var skillsLearntCount = new List<int>();
 
             foreach (var entry in entries)
@@ -47,6 +55,10 @@ namespace InternDiary.Controllers
             {
                 return HttpNotFound();
             }
+            if (entry.AuthorId != _userId)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.Forbidden);
+            }
 
             var skillsLearnt = string.Join(", ", db.Skills
                 .Where(s => db.EntrySkills
@@ -65,9 +77,8 @@ namespace InternDiary.Controllers
 
         public ActionResult Create()
         {
-            var userId = User.Identity.GetUserId();
             _savedSkills = db.Skills
-                    .Where(s => s.AuthorId == userId)
+                    .Where(s => s.AuthorId == _userId)
                     .Select(a => new SelectListItem
                     {
                         Text = a.Text,
@@ -88,6 +99,7 @@ namespace InternDiary.Controllers
         {
             if (ModelState.IsValid)
             {
+                vm.Entry.AuthorId = _userId;
                 db.Entries.Add(vm.Entry);
 
                 foreach (var skillId in vm.SkillsLearntIds ?? Enumerable.Empty<Guid>())
@@ -114,10 +126,13 @@ namespace InternDiary.Controllers
             {
                 return HttpNotFound();
             }
+            if (entry.AuthorId != _userId)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.Forbidden);
+            }
 
-            var userId = User.Identity.GetUserId();
             _savedSkills = db.Skills
-                    .Where(s => s.AuthorId == userId)
+                    .Where(s => s.AuthorId == _userId)
                     .Select(a => new SelectListItem
                     {
                         Text = a.Text,
@@ -173,6 +188,10 @@ namespace InternDiary.Controllers
             if (entry == null)
             {
                 return HttpNotFound();
+            }
+            if (entry.AuthorId != _userId)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.Forbidden);
             }
 
             var skillsLearnt = string.Join(", ", db.Skills.

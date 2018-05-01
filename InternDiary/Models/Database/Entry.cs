@@ -17,5 +17,10 @@ namespace InternDiary.Models.Database
         public int Rating { get; set; }
 
         public string Content { get; set; }
+
+        public string AuthorId { get; set; }
+
+        [ForeignKey("AuthorId")]
+        public virtual ApplicationUser ApplicationUser { get; set; }
     }
 }
