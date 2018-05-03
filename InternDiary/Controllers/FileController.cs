@@ -70,6 +70,30 @@ namespace InternDiary.Controllers
                 doc.InsertParagraph($"{entry.Content}\n");
             }
 
+
+            if (includeSkills)
+            {
+                var skillsFreq = db.Skills
+                    .Where(s => s.AuthorId == _userId)
+                    .GroupJoin(db.EntrySkills, s => s.Id, es => es.SkillId, (s, es) => new { s, es })
+                    .Select(f => new { skillText = f.s.Text, skillCount = f.es.Count() })
+                    .OrderByDescending(f => f.skillCount)
+                    .ThenBy(f => f.skillText).ToList();
+
+                var t = doc.AddTable(skillsFreq.Count + 1, 2);
+                t.Alignment = Alignment.center;
+                t.Design = TableDesign.ColorfulList;
+                t.Rows[0].Cells[0].Paragraphs.First().Append("Skill Text");
+                t.Rows[0].Cells[1].Paragraphs.First().Append("Frequency");
+
+                for (int i = 0; i < skillsFreq.Count; i++)
+                {
+                    t.Rows[i + 1].Cells[0].Paragraphs.First().Append(skillsFreq[i].skillText);
+                    t.Rows[i + 1].Cells[1].Paragraphs.First().Append(skillsFreq[i].skillCount.ToString());
+                }
+                doc.InsertTable(t);
+            }
+
             doc.Save();
         }
     }
