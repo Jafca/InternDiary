@@ -13,17 +13,9 @@ using System.Web.Mvc;
 namespace InternDiary.Controllers
 {
     [Authorize]
-    public class EntryController : Controller
+    public class EntryController : BaseController
     {
-        private ApplicationDbContext db = new ApplicationDbContext();
         private IEnumerable<SelectListItem> _savedSkills;
-        private string _userId;
-
-        protected override void OnActionExecuting(ActionExecutingContext filterContext)
-        {
-            _userId = User.Identity.GetUserId();
-            base.OnActionExecuting(filterContext);
-        }
 
         public ActionResult Index()
         {
