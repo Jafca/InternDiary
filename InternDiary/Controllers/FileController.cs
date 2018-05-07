@@ -58,8 +58,9 @@ namespace InternDiary.Controllers
                         .Where(s => db.EntrySkills
                                 .Where(e => e.EntryId == entry.Id)
                                 .Select(e => e.SkillId)
-                                .Contains(s.Id)
-                        ).Select(s => s.Text).ToArray());
+                                .Contains(s.Id))
+                        .OrderBy(s => s.Text)
+                        .Select(s => s.Text).ToArray());
 
                     if (string.IsNullOrEmpty(skillsLearnt))
                         skillsLearnt = "None";

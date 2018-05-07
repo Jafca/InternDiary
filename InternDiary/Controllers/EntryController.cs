@@ -56,8 +56,9 @@ namespace InternDiary.Controllers
                 .Where(s => db.EntrySkills
                         .Where(e => e.EntryId == id)
                         .Select(e => e.SkillId)
-                        .Contains(s.Id)
-                ).Select(s => s.Text).ToArray());
+                        .Contains(s.Id))
+                .OrderBy(s => s.Text)
+                .Select(s => s.Text).ToArray());
 
             var vm = new EntryDetailsViewModel
             {
@@ -71,6 +72,7 @@ namespace InternDiary.Controllers
         {
             _savedSkills = db.Skills
                     .Where(s => s.AuthorId == _userId)
+                    .OrderBy(s => s.Text)
                     .Select(a => new SelectListItem
                     {
                         Text = a.Text,
@@ -125,6 +127,7 @@ namespace InternDiary.Controllers
 
             _savedSkills = db.Skills
                     .Where(s => s.AuthorId == _userId)
+                    .OrderBy(s => s.Text)
                     .Select(a => new SelectListItem
                     {
                         Text = a.Text,
@@ -190,8 +193,9 @@ namespace InternDiary.Controllers
                 Where(s => db.EntrySkills
                         .Where(e => e.EntryId == id)
                         .Select(e => e.SkillId)
-                        .Contains(s.Id)
-                ).Select(s => s.Text).ToArray());
+                        .Contains(s.Id))
+                .OrderBy(s => s.Text)
+                .Select(s => s.Text).ToArray());
 
             var vm = new EntryDetailsViewModel
             {

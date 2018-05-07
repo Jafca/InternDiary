@@ -18,7 +18,7 @@ namespace InternDiary.Controllers
     {
         public ActionResult Index()
         {
-            var skills = db.Skills.Where(s => s.AuthorId == _userId).ToList();
+            var skills = db.Skills.Where(s => s.AuthorId == _userId).OrderBy(s => s.Text).ToList();
             var skillsFrequency = new List<int>();
 
             foreach (var skill in skills)
