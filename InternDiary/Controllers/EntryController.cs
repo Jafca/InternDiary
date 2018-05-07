@@ -19,7 +19,7 @@ namespace InternDiary.Controllers
 
         public ActionResult Index()
         {
-            var entries = db.Entries.Where(e => e.AuthorId == _userId).ToList();
+            var entries = db.Entries.Where(e => e.AuthorId == _userId).OrderByDescending(e => e.Date).ToList();
             var skillsLearntCount = new List<int>();
 
             foreach (var entry in entries)
