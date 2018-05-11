@@ -15,8 +15,6 @@ namespace InternDiary.Controllers
     [Authorize]
     public class EntryController : BaseController
     {
-        private IEnumerable<SelectListItem> _savedSkills;
-
         public ActionResult Index()
         {
             var entries = db.Entries.Where(e => e.AuthorId == _userId).OrderByDescending(e => e.Date).ToList();
@@ -54,9 +52,9 @@ namespace InternDiary.Controllers
 
             var skillsLearnt = string.Join(", ", db.Skills
                 .Where(s => db.EntrySkills
-                        .Where(e => e.EntryId == id)
-                        .Select(e => e.SkillId)
-                        .Contains(s.Id))
+                    .Where(e => e.EntryId == id)
+                    .Select(e => e.SkillId)
+                    .Contains(s.Id))
                 .OrderBy(s => s.Text)
                 .Select(s => s.Text).ToArray());
 
@@ -70,18 +68,18 @@ namespace InternDiary.Controllers
 
         public ActionResult Create()
         {
-            _savedSkills = db.Skills
-                    .Where(s => s.AuthorId == _userId)
-                    .OrderBy(s => s.Text)
-                    .Select(a => new SelectListItem
-                    {
-                        Text = a.Text,
-                        Value = a.Id.ToString()
-                    });
+            var savedSkills = db.Skills
+                .Where(s => s.AuthorId == _userId)
+                .OrderBy(s => s.Text)
+                .Select(s => new SelectListItem
+                {
+                    Text = s.Text,
+                    Value = s.Text
+                });
 
             var vm = new EntryCreateViewModel
             {
-                SavedSkills = _savedSkills
+                SavedSkills = savedSkills
             };
 
             return View(vm);
@@ -96,16 +94,31 @@ namespace InternDiary.Controllers
                 vm.Entry.AuthorId = _userId;
                 db.Entries.Add(vm.Entry);
 
-                foreach (var skillId in vm.SkillsLearntIds ?? Enumerable.Empty<Guid>())
+                var skills = db.Skills.Where(s => s.AuthorId == _userId);
+                foreach (var skillText in vm.SkillsLearntText ?? Enumerable.Empty<string>())
                 {
-                    db.EntrySkills.Add(new EntrySkill { EntryId = vm.Entry.Id, SkillId = skillId });
+                    var skill = skills.FirstOrDefault(s => s.Text == skillText);
+                    if (skill is null)
+                    {
+                        skill = new Skill { Text = skillText, AuthorId = _userId };
+                        db.Skills.Add(skill);
+                    }
+
+                    db.EntrySkills.Add(new EntrySkill { EntryId = vm.Entry.Id, SkillId = skill.Id });
                 }
 
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
 
-            vm.SavedSkills = _savedSkills;
+            vm.SavedSkills = db.Skills
+                .Where(s => s.AuthorId == _userId)
+                .OrderBy(s => s.Text)
+                .Select(s => new SelectListItem
+                {
+                    Text = s.Text,
+                    Value = s.Text
+                });
             return View(vm);
         }
 
@@ -125,25 +138,26 @@ namespace InternDiary.Controllers
                 return new HttpStatusCodeResult(HttpStatusCode.Forbidden);
             }
 
-            _savedSkills = db.Skills
-                    .Where(s => s.AuthorId == _userId)
-                    .OrderBy(s => s.Text)
-                    .Select(a => new SelectListItem
-                    {
-                        Text = a.Text,
-                        Value = a.Id.ToString()
-                    }).ToList();
+            var savedSkills = db.Skills
+                .Where(s => s.AuthorId == _userId)
+                .OrderBy(s => s.Text)
+                .Select(s => new SelectListItem
+                {
+                    Text = s.Text,
+                    Value = s.Text
+                }).ToList();
 
-            var currentEntrySkills = db.EntrySkills.Where(es => es.EntryId == entry.Id);
+            var currentEntrySkills = db.EntrySkills.Where(es => es.EntryId == entry.Id).ToList();
             foreach (var entrySkill in currentEntrySkills)
             {
-                _savedSkills.FirstOrDefault(s => s.Value == entrySkill.SkillId.ToString()).Selected = true;
+                var skill = db.Skills.Find(entrySkill.SkillId);
+                savedSkills.FirstOrDefault(s => s.Value == skill.Text).Selected = true;
             }
 
             var vm = new EntryCreateViewModel
             {
                 Entry = entry,
-                SavedSkills = _savedSkills
+                SavedSkills = savedSkills
             };
 
             return View(vm);
@@ -153,23 +167,45 @@ namespace InternDiary.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(EntryCreateViewModel vm)
         {
+            var currentEntrySkills = db.EntrySkills.Where(es => es.EntryId == vm.Entry.Id).ToList();
+
             if (ModelState.IsValid)
             {
                 db.Entry(vm.Entry).State = EntityState.Modified;
 
-                var currentEntrySkills = db.EntrySkills.Where(es => es.EntryId == vm.Entry.Id);
                 db.EntrySkills.RemoveRange(currentEntrySkills);
 
-                foreach (var skillId in vm.SkillsLearntIds ?? Enumerable.Empty<Guid>())
+                var skills = db.Skills.Where(s => s.AuthorId == _userId);
+                foreach (var skillText in vm.SkillsLearntText ?? Enumerable.Empty<string>())
                 {
-                    db.EntrySkills.Add(new EntrySkill { EntryId = vm.Entry.Id, SkillId = skillId });
+                    var skill = skills.FirstOrDefault(s => s.Text == skillText);
+                    if (skill is null)
+                    {
+                        skill = new Skill { Text = skillText, AuthorId = _userId };
+                        db.Skills.Add(skill);
+                    }
+
+                    db.EntrySkills.Add(new EntrySkill { EntryId = vm.Entry.Id, SkillId = skill.Id });
                 }
 
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
 
-            vm.SavedSkills = _savedSkills;
+            vm.SavedSkills = db.Skills
+                .Where(s => s.AuthorId == _userId)
+                .OrderBy(s => s.Text)
+                .Select(s => new SelectListItem
+                {
+                    Text = s.Text,
+                    Value = s.Text
+                }).ToList();
+
+            foreach (var entrySkill in currentEntrySkills)
+            {
+                var skill = db.Skills.Find(entrySkill.SkillId);
+                vm.SavedSkills.FirstOrDefault(s => s.Value == skill.Text).Selected = true;
+            }
             return View(vm);
         }
 
@@ -191,9 +227,9 @@ namespace InternDiary.Controllers
 
             var skillsLearnt = string.Join(", ", db.Skills.
                 Where(s => db.EntrySkills
-                        .Where(e => e.EntryId == id)
-                        .Select(e => e.SkillId)
-                        .Contains(s.Id))
+                    .Where(e => e.EntryId == id)
+                    .Select(e => e.SkillId)
+                    .Contains(s.Id))
                 .OrderBy(s => s.Text)
                 .Select(s => s.Text).ToArray());
 

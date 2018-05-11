@@ -11,6 +11,6 @@ namespace InternDiary.ViewModels.EntryVM
         public Entry Entry { get; set; }
         public IEnumerable<SelectListItem> SavedSkills { get; set; }
         [DisplayName("Skills I learnt")]
-        public Guid[] SkillsLearntIds { get; set; }
+        public string[] SkillsLearntText { get; set; }
     }
 }

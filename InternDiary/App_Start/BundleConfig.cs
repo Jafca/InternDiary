@@ -26,6 +26,13 @@ namespace InternDiary
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       "~/Content/bootstrap.css",
                       "~/Content/site.css"));
+
+            bundles.Add(new ScriptBundle("~/bundles/Chosen").Include(
+                      "~/Scripts/Chosen/chosen.jquery.min.js",
+                      "~/Scripts/Chosen/ChosenExtra.js"));
+
+            bundles.Add(new StyleBundle("~/Content/Chosen").Include(
+                      "~/Content/Chosen/chosen.min.css"));
         }
     }
 }
