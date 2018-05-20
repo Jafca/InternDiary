@@ -79,6 +79,7 @@ namespace InternDiary.Controllers
 
             var vm = new EntryCreateViewModel
             {
+                Entry = new Entry { Date = DateTime.Now },
                 SavedSkills = savedSkills
             };
 
