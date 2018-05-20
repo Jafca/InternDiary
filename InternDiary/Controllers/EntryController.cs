@@ -90,6 +90,10 @@ namespace InternDiary.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create(EntryCreateViewModel vm)
         {
+            var entries = db.Entries.Where(e => e.AuthorId == _userId).ToList();
+            if (entries.Any(e => e.Date == vm.Entry.Date))
+                ModelState.AddModelError("Entry.Date", "An Entry already exists for this date.");
+
             if (ModelState.IsValid)
             {
                 vm.Entry.AuthorId = _userId;
@@ -169,6 +173,10 @@ namespace InternDiary.Controllers
         public ActionResult Edit(EntryCreateViewModel vm)
         {
             var currentEntrySkills = db.EntrySkills.Where(es => es.EntryId == vm.Entry.Id).ToList();
+
+            var duplicates = db.Entries.Where(e => e.AuthorId == _userId && e.Date == vm.Entry.Date);
+            if (duplicates.Any(e => e.Id != vm.Entry.Id))
+                ModelState.AddModelError("Entry.Date", "An Entry already exists for this date.");
 
             if (ModelState.IsValid)
             {
