@@ -33,6 +33,10 @@ namespace InternDiary
 
             bundles.Add(new StyleBundle("~/Content/Chosen").Include(
                       "~/Content/Chosen/chosen.min.css"));
+
+            bundles.Add(new ScriptBundle("~/bundles/Countable").Include(
+                      "~/Scripts/Countable/Countable.js",
+                      "~/Scripts/Countable/CountableExtra.js"));
         }
     }
 }

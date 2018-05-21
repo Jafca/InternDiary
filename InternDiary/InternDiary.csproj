@@ -254,6 +254,8 @@
     <Content Include="Scripts\Chosen\chosen.jquery.js" />
     <Content Include="Scripts\Chosen\chosen.jquery.min.js" />
     <Content Include="Scripts\Chosen\ChosenExtra.js" />
+    <Content Include="Scripts\Countable\Countable.js" />
+    <Content Include="Scripts\Countable\CountableExtra.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
     <Content Include="Scripts\jquery-1.10.2.min.js" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
