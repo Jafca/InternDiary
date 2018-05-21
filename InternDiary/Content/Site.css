@@ -22,3 +22,9 @@ select,
 textarea {
     max-width: 280px;
 }
+
+.contentTextArea {
+    width: 100%;
+    min-height: 110px;
+    resize: vertical;
+}
