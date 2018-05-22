@@ -277,13 +277,34 @@ namespace InternDiary.Controllers
             var events = new List<FullCalendarEvent>();
             foreach (var entry in entries)
             {
+                var ratingColor = "BLACK";
+
+                switch (entry.Rating)
+                {
+                    case 1:
+                        ratingColor = "CRIMSON";
+                        break;
+                    case 2:
+                        ratingColor = "DARKORANGE";
+                        break;
+                    case 3:
+                        ratingColor = "GOLD";
+                        break;
+                    case 4:
+                        ratingColor = "STEELBLUE";
+                        break;
+                    case 5:
+                        ratingColor = "LIMEGREEN";
+                        break;
+                }
+
                 events.Add(new FullCalendarEvent
                 {
                     title = entry.Title,
                     start = entry.Date.AddDays(1),
                     url = $"/Entry/Edit/{entry.Id}",
-                    color = "yellow",
-                    textColor = "red"
+                    color = ratingColor,
+                    textColor = "WHITE"
                 });
             }
             return Json(events);
