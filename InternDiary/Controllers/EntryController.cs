@@ -14,57 +14,6 @@ namespace InternDiary.Controllers
     [Authorize]
     public class EntryController : BaseController
     {
-        public ActionResult Index()
-        {
-            var entries = db.Entries.Where(e => e.AuthorId == _userId).OrderByDescending(e => e.Date).ToList();
-            var skillsLearntCount = new List<int>();
-
-            foreach (var entry in entries)
-            {
-                skillsLearntCount.Add(db.EntrySkills.Count(es => es.EntryId == entry.Id));
-            }
-
-            var vm = new EntryIndexViewModel
-            {
-                Entries = entries,
-                SkillsLearntCount = skillsLearntCount
-            };
-
-            return View(vm);
-        }
-
-        public ActionResult Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Entry entry = db.Entries.Find(id);
-            if (entry == null)
-            {
-                return HttpNotFound();
-            }
-            if (entry.AuthorId != _userId)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.Forbidden);
-            }
-
-            var skillsLearnt = string.Join(", ", db.Skills
-                .Where(s => db.EntrySkills
-                    .Where(e => e.EntryId == id)
-                    .Select(e => e.SkillId)
-                    .Contains(s.Id))
-                .OrderBy(s => s.Text)
-                .Select(s => s.Text).ToArray());
-
-            var vm = new EntryDetailsViewModel
-            {
-                Entry = entry,
-                SkillsLearnt = skillsLearnt
-            };
-            return View(vm);
-        }
-
         public ActionResult Create(string date)
         {
             var entryDate = DateTime.TryParse(date, out DateTime parsedDate) ? parsedDate : DateTime.Now.Date;
@@ -119,7 +68,7 @@ namespace InternDiary.Controllers
                 }
 
                 db.SaveChanges();
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Home");
             }
 
             vm.SavedSkills = db.Skills
@@ -204,7 +153,7 @@ namespace InternDiary.Controllers
                 }
 
                 db.SaveChanges();
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Home");
             }
 
             vm.SavedSkills = db.Skills
@@ -248,7 +197,7 @@ namespace InternDiary.Controllers
                 .OrderBy(s => s.Text)
                 .Select(s => s.Text).ToArray());
 
-            var vm = new EntryDetailsViewModel
+            var vm = new EntryDeleteViewModel
             {
                 Entry = entry,
                 SkillsLearnt = skillsLearnt
@@ -267,7 +216,7 @@ namespace InternDiary.Controllers
             db.EntrySkills.RemoveRange(currentEntrySkills);
 
             db.SaveChanges();
-            return RedirectToAction("Index");
+            return RedirectToAction("Index", "Home");
         }
 
         public JsonResult GetCalendarEntries()
@@ -277,8 +226,9 @@ namespace InternDiary.Controllers
             var events = new List<FullCalendarEvent>();
             foreach (var entry in entries)
             {
-                var ratingColor = "BLACK";
+                var skillsLearntCount = db.EntrySkills.Count(es => es.EntryId == entry.Id);
 
+                var ratingColor = "BLACK";
                 switch (entry.Rating)
                 {
                     case 1:
@@ -300,7 +250,7 @@ namespace InternDiary.Controllers
 
                 events.Add(new FullCalendarEvent
                 {
-                    title = entry.Title,
+                    title = $"{entry.Title}\n[Skills Count: {skillsLearntCount}]",
                     start = entry.Date.AddDays(1),
                     url = $"/Entry/Edit/{entry.Id}",
                     color = ratingColor,
