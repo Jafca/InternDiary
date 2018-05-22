@@ -1,5 +1,4 @@
-﻿using System.Web;
-using System.Web.Optimization;
+﻿using System.Web.Optimization;
 
 namespace InternDiary
 {
@@ -37,6 +36,14 @@ namespace InternDiary
             bundles.Add(new ScriptBundle("~/bundles/Countable").Include(
                       "~/Scripts/Countable/Countable.js",
                       "~/Scripts/Countable/CountableExtra.js"));
+
+            bundles.Add(new ScriptBundle("~/bundles/FullCalendar").Include(
+                      "~/Scripts/Moment/moment.min.js",
+                      "~/Scripts/FullCalendar/fullcalendar.min.js",
+                      "~/Scripts/FullCalendar/FullCalendarExtra.js"));
+
+            bundles.Add(new StyleBundle("~/Content/FullCalendar").Include(
+                      "~/Content/FullCalendar/fullcalendar.min.css"));
         }
     }
 }
