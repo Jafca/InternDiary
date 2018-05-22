@@ -1,7 +1,6 @@
 ﻿using InternDiary.Models;
 using InternDiary.Models.Database;
 using InternDiary.ViewModels.EntryVM;
-using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -66,8 +65,15 @@ namespace InternDiary.Controllers
             return View(vm);
         }
 
-        public ActionResult Create()
+        public ActionResult Create(string date)
         {
+            var entryDate = DateTime.TryParse(date, out DateTime parsedDate) ? parsedDate : DateTime.Now.Date;
+            var entries = db.Entries.Where(e => e.AuthorId == _userId).ToList();
+
+            var existingEntry = entries.FirstOrDefault(e => e.Date == entryDate);
+            if (existingEntry != null)
+                return RedirectToAction("Edit", new { id = existingEntry.Id });
+
             var savedSkills = db.Skills
                 .Where(s => s.AuthorId == _userId)
                 .OrderBy(s => s.Text)
@@ -79,7 +85,7 @@ namespace InternDiary.Controllers
 
             var vm = new EntryCreateViewModel
             {
-                Entry = new Entry { Date = DateTime.Now },
+                Entry = new Entry { Date = entryDate },
                 SavedSkills = savedSkills
             };
 

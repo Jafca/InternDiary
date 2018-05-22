@@ -7,6 +7,9 @@
             error: function () {
                 console.log('There was an error while fetching events!');
             }
+        },
+        dayClick: function (date) {
+            window.location.href = "/Entry/Create?date=" + date.format();
         }
     })
 });
