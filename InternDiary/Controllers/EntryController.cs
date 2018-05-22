@@ -264,6 +264,25 @@ namespace InternDiary.Controllers
             return RedirectToAction("Index");
         }
 
+        public JsonResult GetCalendarEntries()
+        {
+            var entries = db.Entries.Where(e => e.AuthorId == _userId).OrderBy(e => e.Date).ToList();
+
+            var events = new List<FullCalendarEvent>();
+            foreach (var entry in entries)
+            {
+                events.Add(new FullCalendarEvent
+                {
+                    title = entry.Title,
+                    start = entry.Date.AddDays(1),
+                    url = $"/Entry/Edit/{entry.Id}",
+                    color = "yellow",
+                    textColor = "red"
+                });
+            }
+            return Json(events);
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
