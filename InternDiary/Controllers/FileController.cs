@@ -1,9 +1,8 @@
-﻿using InternDiary.ViewModels.EntryVM;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Linq;
 using Xceed.Words.NET;
+using Word = Microsoft.Office.Interop.Word;
 
 namespace InternDiary.Controllers
 {
@@ -14,21 +13,18 @@ namespace InternDiary.Controllers
             var filepath = Server.MapPath("/UserFiles/" + _userId + ".docx");
             WriteEntriesToDocx(filepath);
 
-            FileInfo file = new FileInfo(filepath);
-            if (file.Exists)
-            {
-                Response.Clear();
-                Response.ClearHeaders();
-                Response.ClearContent();
-                Response.AddHeader("Content-Disposition", "attachment; filename=" + "InternDiary.docx");
-                Response.AddHeader("Content-Length", file.Length.ToString());
-                Response.ContentType = "application/octet-stream";
-                Response.Flush();
-                Response.TransmitFile(file.FullName);
-                Response.End();
-            }
+            SendAndDeleteFile(filepath, ".docx");
+        }
 
-            System.IO.File.Delete(filepath);
+        public void EntriesToPdf()
+        {
+            var filepath = Server.MapPath("/UserFiles/" + _userId + ".docx");
+            WriteEntriesToDocx(filepath);
+
+            var pdfFilePath = Server.MapPath("/UserFiles/" + _userId + ".pdf");
+            Convert(filepath, pdfFilePath, Word.WdSaveFormat.wdFormatPDF);
+
+            SendAndDeleteFile(pdfFilePath, ".pdf");
         }
 
         public void WriteEntriesToDocx(string filepath, bool includeSkills = true)
@@ -96,6 +92,61 @@ namespace InternDiary.Controllers
             }
 
             doc.Save();
+        }
+
+        /// <summary>
+        /// Source: http://cathalscorner.blogspot.co.uk/2009/10/converting-docx-into-doc-pdf-html.html
+        /// Please note: You must have the Microsoft Office 2007 Add-in: Microsoft Save as PDF or XPS installed
+        /// http://www.microsoft.com/downloads/details.aspx?FamilyId=4D951911-3E7E-4AE6-B059-A2E79ED87041&displaylang=en
+        /// </summary>
+        public static void Convert(string input, string output, Word.WdSaveFormat format)
+        {
+            Word._Application oWord = new Word.Application
+            {
+                Visible = false // Make this instance of word invisible (Can still see it in the taskmgr).
+            };
+
+            // Interop requires objects.
+            object oMissing = System.Reflection.Missing.Value;
+            object isVisible = true;
+            object readOnly = false;
+            object oInput = input;
+            object oOutput = output;
+            object oFormat = format;
+
+            // Load a document into our instance of word.exe
+            Word._Document oDoc = oWord.Documents.Open(ref oInput, ref oMissing, ref readOnly, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref isVisible, ref oMissing, ref oMissing, ref oMissing, ref oMissing);
+
+            // Make this document the active document.
+            oDoc.Activate();
+
+            // Save this document in Word 2003 format.
+            oDoc.SaveAs(ref oOutput, ref oFormat, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing);
+            oDoc.Close();
+
+            // Always close Word.exe.
+            oWord.Quit(ref oMissing, ref oMissing, ref oMissing);
+
+            System.IO.File.Delete(input);
+        }
+
+        public void SendAndDeleteFile(string filepath, string extension)
+        {
+            FileInfo file = new FileInfo(filepath);
+            if (file.Exists)
+            {
+                Response.Clear();
+                Response.ClearHeaders();
+                Response.ClearContent();
+                Response.AddHeader("Content-Disposition", "attachment; filename=" + $"InternDiary{extension}");
+                Response.AddHeader("Content-Length", file.Length.ToString());
+                Response.ContentType = "application/octet-stream";
+                Response.Flush();
+                Response.TransmitFile(file.FullName);
+                Response.End();
+            }
+
+            System.IO.File.Delete(filepath);
         }
     }
 }
