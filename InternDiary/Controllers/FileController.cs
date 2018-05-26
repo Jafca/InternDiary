@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using Xceed.Words.NET;
@@ -27,7 +28,7 @@ namespace InternDiary.Controllers
             SendAndDeleteFile(pdfFilePath, ".pdf");
         }
 
-        public void WriteEntriesToDocx(string filepath, bool includeSkills = true)
+        public void WriteEntriesToDocx(string filepath, bool includeSkillsTable = true)
         {
             var doc = DocX.Create(filepath);
             doc.InsertParagraph("Intern Diary\n", false, new Formatting
@@ -38,37 +39,58 @@ namespace InternDiary.Controllers
             }).Alignment = Alignment.center;
 
             var entries = db.Entries.Where(e => e.AuthorId == _userId).OrderBy(e => e.Date).ToList();
-            foreach (var entry in entries)
+
+            var headerFormatting = new Formatting { FontColor = Color.White, Bold = true };
+            var borderColour = new Border { Color = Color.LightSkyBlue };
+
+            var entryTable = doc.AddTable(entries.Count + 1, 3);
+            entryTable.Alignment = Alignment.center;
+            entryTable.Design = TableDesign.TableNormal;
+            entryTable.SetWidths(new float[] { 50, 450, 100 });
+
+            entryTable.Rows[0].Cells[0].Paragraphs.First().Append("Date", headerFormatting);
+            entryTable.Rows[0].Cells[1].Paragraphs.First().Append("Entry", headerFormatting);
+            entryTable.Rows[0].Cells[2].Paragraphs.First().Append("Skills I learnt", headerFormatting);
+
+            entryTable.Rows[0].Cells[0].Shading = Color.LightSkyBlue;
+            entryTable.Rows[0].Cells[1].Shading = Color.LightSkyBlue;
+            entryTable.Rows[0].Cells[2].Shading = Color.LightSkyBlue;
+
+            entryTable.Rows[0].Cells.First().SetBorder(TableCellBorderType.Left, borderColour);
+            entryTable.Rows[0].Cells.Last().SetBorder(TableCellBorderType.Right, borderColour);
+
+            for (int i = 0; i < entries.Count; i++)
             {
-                doc.InsertParagraph(entry.Date.ToShortDateString()).Alignment = Alignment.right;
+                var rating = String.Join(" ", (new String('★', entries[i].Rating) + new String('☆', 5 - entries[i].Rating)).ToCharArray());
+                entryTable.Rows[i + 1].Cells[0].Paragraphs.First().Append($"{entries[i].Date:dd/MM/yyyy}\n{rating}");
+                entryTable.Rows[i + 1].Cells[0].SetBorder(TableCellBorderType.Bottom, borderColour);
 
-                var rating = String.Join(" ", (new String('★', entry.Rating) + new String('☆', 5 - entry.Rating)).ToCharArray());
-                doc.InsertParagraph($"{entry.Title}\t{rating}", false, new Formatting
-                {
-                    Bold = true
-                });
+                entryTable.Rows[i + 1].Cells[1].Paragraphs.First().Append(entries[i].Title).Bold().Append($"\n{entries[i].Content}");
+                entryTable.Rows[i + 1].Cells[1].SetBorder(TableCellBorderType.Bottom, borderColour);
 
-                if (includeSkills)
-                {
-                    var skillsLearnt = string.Join(", ", db.Skills
+                var id = entries[i].Id;
+                var skillsLearnt = string.Join(", ", db.Skills
                         .Where(s => db.EntrySkills
-                                .Where(e => e.EntryId == entry.Id)
+                                .Where(e => e.EntryId == id)
                                 .Select(e => e.SkillId)
                                 .Contains(s.Id))
                         .OrderBy(s => s.Text)
                         .Select(s => s.Text).ToArray());
 
-                    if (string.IsNullOrEmpty(skillsLearnt))
-                        skillsLearnt = "None";
+                if (string.IsNullOrEmpty(skillsLearnt))
+                    skillsLearnt = "None";
 
-                    doc.InsertParagraph($"Skills I learnt: {skillsLearnt}");
-                }
+                entryTable.Rows[i + 1].Cells[2].Paragraphs.First().Append(skillsLearnt);
+                entryTable.Rows[i + 1].Cells[2].SetBorder(TableCellBorderType.Bottom, borderColour);
 
-                doc.InsertParagraph($"{entry.Content}\n");
+                entryTable.Rows[i + 1].Cells.First().SetBorder(TableCellBorderType.Left, borderColour);
+                entryTable.Rows[i + 1].Cells.Last().SetBorder(TableCellBorderType.Right, borderColour);
             }
+            doc.InsertTable(entryTable);
 
+            doc.InsertParagraph();
 
-            if (includeSkills)
+            if (includeSkillsTable)
             {
                 var skillsFreq = db.Skills
                     .Where(s => s.AuthorId == _userId)
@@ -79,14 +101,27 @@ namespace InternDiary.Controllers
 
                 var t = doc.AddTable(skillsFreq.Count + 1, 2);
                 t.Alignment = Alignment.center;
-                t.Design = TableDesign.ColorfulList;
-                t.Rows[0].Cells[0].Paragraphs.First().Append("Skill Text");
-                t.Rows[0].Cells[1].Paragraphs.First().Append("Frequency");
+                t.Design = TableDesign.TableNormal;
+
+                t.Rows[0].Cells[0].Paragraphs.First().Append("Skills", headerFormatting);
+                t.Rows[0].Cells[1].Paragraphs.First().Append("Frequency", headerFormatting);
+
+                t.Rows[0].Cells[0].Shading = Color.LightSkyBlue;
+                t.Rows[0].Cells[1].Shading = Color.LightSkyBlue;
+
+                t.Rows[0].Cells.First().SetBorder(TableCellBorderType.Left, borderColour);
+                t.Rows[0].Cells.Last().SetBorder(TableCellBorderType.Right, borderColour);
 
                 for (int i = 0; i < skillsFreq.Count; i++)
                 {
                     t.Rows[i + 1].Cells[0].Paragraphs.First().Append(skillsFreq[i].skillText);
+                    t.Rows[i + 1].Cells[0].SetBorder(TableCellBorderType.Bottom, borderColour);
+
                     t.Rows[i + 1].Cells[1].Paragraphs.First().Append(skillsFreq[i].skillCount.ToString());
+                    t.Rows[i + 1].Cells[1].SetBorder(TableCellBorderType.Bottom, borderColour);
+
+                    t.Rows[i + 1].Cells.First().SetBorder(TableCellBorderType.Left, borderColour);
+                    t.Rows[i + 1].Cells.Last().SetBorder(TableCellBorderType.Right, borderColour);
                 }
                 doc.InsertTable(t);
             }
