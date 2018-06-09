@@ -1,29 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.Entity;
-using System.Linq;
-using System.Net;
-using System.Web;
-using System.Web.Mvc;
-using InternDiary.Models;
+﻿using InternDiary.Data;
 using InternDiary.Models.Database;
 using InternDiary.ViewModels.SkillVM;
-using Microsoft.AspNet.Identity;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Web.Mvc;
 
 namespace InternDiary.Controllers
 {
     [Authorize]
     public class SkillController : BaseController
     {
+        private IEntrySkillService _entrySkillService = new EntrySkillService();
+        private ISkillService _skillService = new SkillService();
+
         public ActionResult Index()
         {
-            var skills = db.Skills.Where(s => s.AuthorId == _userId).OrderBy(s => s.Text).ToList();
             var skillsFrequency = new List<int>();
-
+            var skills = _skillService.GetSkillsByUserAlphabetically(_userId);
             foreach (var skill in skills)
             {
-                skillsFrequency.Add(db.EntrySkills.Count(es => es.SkillId == skill.Id));
+                skillsFrequency.Add(_entrySkillService.CountEntrySkillsBySkillId(skill.Id));
             }
 
             var vm = new SkillIndexViewModel
@@ -44,14 +42,13 @@ namespace InternDiary.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind(Include = "Id,Text,AuthorId")] Skill skill)
         {
-            if (db.Skills.Any(s => s.Text == skill.Text))
+            if (_skillService.GetSkillsByText(skill.Text).Any())
                 ModelState.AddModelError("Text", "A skill with that name already exists");
 
             if (ModelState.IsValid)
             {
                 skill.AuthorId = _userId;
-                db.Skills.Add(skill);
-                db.SaveChanges();
+                _skillService.AddSkill(skill);
                 return RedirectToAction("Index");
             }
 
@@ -64,7 +61,7 @@ namespace InternDiary.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Skill skill = db.Skills.Find(id);
+            var skill = _skillService.GetSkillById(id.Value);
             if (skill == null)
             {
                 return HttpNotFound();
@@ -81,14 +78,13 @@ namespace InternDiary.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit([Bind(Include = "Id,Text,AuthorId")] Skill skill)
         {
-            var duplicates = db.Skills.Where(s => s.Text == skill.Text);
+            var duplicates = _skillService.GetSkillsByText(skill.Text);
             if (duplicates.Any(s => s.Id != skill.Id))
                 ModelState.AddModelError("Text", "A skill with that name already exists");
 
             if (ModelState.IsValid)
             {
-                db.Entry(skill).State = EntityState.Modified;
-                db.SaveChanges();
+                _skillService.UpdateSkill(skill);
                 return RedirectToAction("Index");
             }
             return View(skill);
@@ -100,7 +96,7 @@ namespace InternDiary.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Skill skill = db.Skills.Find(id);
+            var skill = _skillService.GetSkillById(id.Value);
             if (skill == null)
             {
                 return HttpNotFound();
@@ -116,23 +112,12 @@ namespace InternDiary.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(Guid id)
         {
-            Skill skill = db.Skills.Find(id);
-            db.Skills.Remove(skill);
+            var currentEntrySkills = _entrySkillService.GetEntrySkillsBySkillId(id);
+            _entrySkillService.DeleteEntrySkills(currentEntrySkills);
 
-            var currentEntrySkills = db.EntrySkills.Where(es => es.SkillId == id);
-            db.EntrySkills.RemoveRange(currentEntrySkills);
+            _skillService.DeleteSkillById(id);
 
-            db.SaveChanges();
             return RedirectToAction("Index");
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
         }
     }
 }

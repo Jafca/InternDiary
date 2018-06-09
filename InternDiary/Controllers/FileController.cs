@@ -1,4 +1,5 @@
-﻿using System;
+﻿using InternDiary.Data;
+using System;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -9,6 +10,9 @@ namespace InternDiary.Controllers
 {
     public class FileController : BaseController
     {
+        private IEntryService _entryService = new EntryService();
+        private ISkillService _skillService = new SkillService();
+
         public void EntriesToDocx()
         {
             var filepath = Server.MapPath("/UserFiles/" + _userId + ".docx");
@@ -38,7 +42,7 @@ namespace InternDiary.Controllers
                 UnderlineStyle = UnderlineStyle.singleLine
             }).Alignment = Alignment.center;
 
-            var entries = db.Entries.Where(e => e.AuthorId == _userId).OrderBy(e => e.Date).ToList();
+            var entries = _entryService.GetEntriesByUserOrderByDateDesc(_userId);
 
             var headerFormatting = new Formatting { FontColor = Color.White, Bold = true };
             var borderColour = new Border { Color = Color.LightSkyBlue };
@@ -69,13 +73,7 @@ namespace InternDiary.Controllers
                 entryTable.Rows[i + 1].Cells[1].SetBorder(TableCellBorderType.Bottom, borderColour);
 
                 var id = entries[i].Id;
-                var skillsLearnt = string.Join(", ", db.Skills
-                        .Where(s => db.EntrySkills
-                                .Where(e => e.EntryId == id)
-                                .Select(e => e.SkillId)
-                                .Contains(s.Id))
-                        .OrderBy(s => s.Text)
-                        .Select(s => s.Text).ToArray());
+                var skillsLearnt = _skillService.GetSkillsLearntByEntryId(id);
 
                 if (string.IsNullOrEmpty(skillsLearnt))
                     skillsLearnt = "None";
@@ -92,12 +90,7 @@ namespace InternDiary.Controllers
 
             if (includeSkillsTable)
             {
-                var skillsFreq = db.Skills
-                    .Where(s => s.AuthorId == _userId)
-                    .GroupJoin(db.EntrySkills, s => s.Id, es => es.SkillId, (s, es) => new { s, es })
-                    .Select(f => new { skillText = f.s.Text, skillCount = f.es.Count() })
-                    .OrderByDescending(f => f.skillCount)
-                    .ThenBy(f => f.skillText).ToList();
+                var skillsFreq = _skillService.GetSkillsFrequencyByUser(_userId);
 
                 var t = doc.AddTable(skillsFreq.Count + 1, 2);
                 t.Alignment = Alignment.center;
@@ -114,10 +107,10 @@ namespace InternDiary.Controllers
 
                 for (int i = 0; i < skillsFreq.Count; i++)
                 {
-                    t.Rows[i + 1].Cells[0].Paragraphs.First().Append(skillsFreq[i].skillText);
+                    t.Rows[i + 1].Cells[0].Paragraphs.First().Append(skillsFreq[i].Key);
                     t.Rows[i + 1].Cells[0].SetBorder(TableCellBorderType.Bottom, borderColour);
 
-                    t.Rows[i + 1].Cells[1].Paragraphs.First().Append(skillsFreq[i].skillCount.ToString());
+                    t.Rows[i + 1].Cells[1].Paragraphs.First().Append(skillsFreq[i].Value.ToString());
                     t.Rows[i + 1].Cells[1].SetBorder(TableCellBorderType.Bottom, borderColour);
 
                     t.Rows[i + 1].Cells.First().SetBorder(TableCellBorderType.Left, borderColour);

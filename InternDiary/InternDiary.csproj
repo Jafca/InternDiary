@@ -208,6 +208,16 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
     <Compile Include="Controllers\SkillController.cs" />
+    <Compile Include="Data\EFRepository.cs" />
+    <Compile Include="Data\EntryService.cs" />
+    <Compile Include="Data\IEntryService.cs" />
+    <Compile Include="Data\IRepository.cs" />
+    <Compile Include="Data\IEntrySkillService.cs" />
+    <Compile Include="Data\ISkillService.cs" />
+    <Compile Include="Data\IUnitOfWork.cs" />
+    <Compile Include="Data\EntrySkillService.cs" />
+    <Compile Include="Data\SkillService.cs" />
+    <Compile Include="Data\UnitOfWork.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
