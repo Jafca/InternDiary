@@ -12,16 +12,25 @@ namespace InternDiary.Controllers
     [Authorize]
     public class SkillController : BaseController
     {
-        private IEntrySkillService _entrySkillService = new EntrySkillService();
-        private ISkillService _skillService = new SkillService();
+        private DataAccess _data;
+
+        public SkillController()
+        {
+            _data = new DataAccess();
+        }
+
+        public SkillController(DataAccess dataAccess)
+        {
+            _data = dataAccess;
+        }
 
         public ActionResult Index()
         {
             var skillsFrequency = new List<int>();
-            var skills = _skillService.GetSkillsByUserAlphabetically(_userId);
+            var skills = _data.SkillService.GetSkillsByUserAlphabetically(_userId);
             foreach (var skill in skills)
             {
-                skillsFrequency.Add(_entrySkillService.CountEntrySkillsBySkillId(skill.Id));
+                skillsFrequency.Add(_data.EntrySkillService.CountEntrySkillsBySkillId(skill.Id));
             }
 
             var vm = new SkillIndexViewModel
@@ -42,13 +51,13 @@ namespace InternDiary.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind(Include = "Id,Text,AuthorId")] Skill skill)
         {
-            if (_skillService.GetSkillsByText(skill.Text).Any())
+            if (_data.SkillService.GetSkillsByText(skill.Text).Any())
                 ModelState.AddModelError("Text", "A skill with that name already exists");
 
             if (ModelState.IsValid)
             {
                 skill.AuthorId = _userId;
-                _skillService.AddSkill(skill);
+                _data.SkillService.AddSkill(skill);
                 return RedirectToAction("Index");
             }
 
@@ -61,7 +70,7 @@ namespace InternDiary.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            var skill = _skillService.GetSkillById(id.Value);
+            var skill = _data.SkillService.GetSkillById(id.Value);
             if (skill == null)
             {
                 return HttpNotFound();
@@ -78,13 +87,13 @@ namespace InternDiary.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit([Bind(Include = "Id,Text,AuthorId")] Skill skill)
         {
-            var duplicates = _skillService.GetSkillsByText(skill.Text);
+            var duplicates = _data.SkillService.GetSkillsByText(skill.Text);
             if (duplicates.Any(s => s.Id != skill.Id))
                 ModelState.AddModelError("Text", "A skill with that name already exists");
 
             if (ModelState.IsValid)
             {
-                _skillService.UpdateSkill(skill);
+                _data.SkillService.UpdateSkill(skill);
                 return RedirectToAction("Index");
             }
             return View(skill);
@@ -96,7 +105,7 @@ namespace InternDiary.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            var skill = _skillService.GetSkillById(id.Value);
+            var skill = _data.SkillService.GetSkillById(id.Value);
             if (skill == null)
             {
                 return HttpNotFound();
@@ -112,10 +121,10 @@ namespace InternDiary.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(Guid id)
         {
-            var currentEntrySkills = _entrySkillService.GetEntrySkillsBySkillId(id);
-            _entrySkillService.DeleteEntrySkills(currentEntrySkills);
+            var currentEntrySkills = _data.EntrySkillService.GetEntrySkillsBySkillId(id);
+            _data.EntrySkillService.DeleteEntrySkills(currentEntrySkills);
 
-            _skillService.DeleteSkillById(id);
+            _data.SkillService.DeleteSkillById(id);
 
             return RedirectToAction("Index");
         }

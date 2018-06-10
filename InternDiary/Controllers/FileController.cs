@@ -10,8 +10,7 @@ namespace InternDiary.Controllers
 {
     public class FileController : BaseController
     {
-        private IEntryService _entryService = new EntryService();
-        private ISkillService _skillService = new SkillService();
+        private DataAccess _data = new DataAccess();
 
         public void EntriesToDocx()
         {
@@ -42,7 +41,7 @@ namespace InternDiary.Controllers
                 UnderlineStyle = UnderlineStyle.singleLine
             }).Alignment = Alignment.center;
 
-            var entries = _entryService.GetEntriesByUserOrderByDateDesc(_userId);
+            var entries = _data.EntryService.GetEntriesByUserOrderByDateDesc(_userId);
 
             var headerFormatting = new Formatting { FontColor = Color.White, Bold = true };
             var borderColour = new Border { Color = Color.LightSkyBlue };
@@ -73,7 +72,7 @@ namespace InternDiary.Controllers
                 entryTable.Rows[i + 1].Cells[1].SetBorder(TableCellBorderType.Bottom, borderColour);
 
                 var id = entries[i].Id;
-                var skillsLearnt = _skillService.GetSkillsLearntByEntryId(id);
+                var skillsLearnt = _data.SkillService.GetSkillsLearntByEntryId(id);
 
                 if (string.IsNullOrEmpty(skillsLearnt))
                     skillsLearnt = "None";
@@ -90,7 +89,7 @@ namespace InternDiary.Controllers
 
             if (includeSkillsTable)
             {
-                var skillsFreq = _skillService.GetSkillsFrequencyByUser(_userId);
+                var skillsFreq = _data.SkillService.GetSkillsFrequencyByUser(_userId);
 
                 var t = doc.AddTable(skillsFreq.Count + 1, 2);
                 t.Alignment = Alignment.center;

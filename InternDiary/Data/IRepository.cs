@@ -6,19 +6,10 @@ namespace InternDiary.Data
 {
     public interface IRepository<TEntity> where TEntity : class
     {
-        IEnumerable<TEntity> Get(
-            Expression<Func<TEntity, bool>> filter = null,
-            Expression<Func<TEntity, dynamic>> orderBy = null,
-            string includeProperties = "");
-
-        IEnumerable<TEntity> GetAll(
-            Expression<Func<TEntity, dynamic>> orderBy = null,
-            string includeProperties = "");
-
+        IEnumerable<TEntity> Get(Expression<Func<TEntity, bool>> filter, Expression<Func<TEntity, dynamic>> orderBy);
         void Add(TEntity entity);
-
         void Alter(TEntity entity);
-
         void Remove(TEntity entity);
+        void Save();
     }
 }
